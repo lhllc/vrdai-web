@@ -1,0 +1,16 @@
+name: Regen Lockfile
+on: push
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 8 }
+      - run: pnpm install
+      - run: |
+          git config --global user.email bot@example.com
+          git config --global user.name  lockfile-bot
+          git add pnpm-lock.yaml
+          git commit -m "ci: lockfile" || echo "No change"
+      - run: git push
