@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { createCheckout } from '../app/api';
+import { createCheckoutSession, PlanType, BillingInterval, calculateSavings, getPriceId } from '../utils/payment';
+import { useRouter } from 'next/router';
 
 const PaymentGate: React.FC = () => {
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
-  const [selectedTier, setSelectedTier] = useState<'base' | 'pro'>('base');
+  const router = useRouter();
+  const [selectedPlan, setSelectedPlan] = useState<BillingInterval>('annual');
+  const [selectedTier, setSelectedTier] = useState<PlanType>('base');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isChartLoaded, setIsChartLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load TradingView widget script
@@ -39,26 +42,25 @@ const PaymentGate: React.FC = () => {
     }
   }, [isChartLoaded]);
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     setIsProcessing(true);
+    setError(null);
     try {
-      let priceId;
-      if (selectedTier === 'base') {
-        priceId = selectedPlan === 'monthly' 
-          ? 'price_1RHq8IBGfO543PPIq13lWoz5'  // Base Monthly
-          : 'price_1RHq8kBGfO543PPISz8x3xSy';  // Base Annual
-      } else {
-        priceId = selectedPlan === 'monthly'
-          ? 'price_1RHq9EBGfO543PPIEMdDMqkD'  // Pro Monthly
-          : 'price_1RHq9sBGfO543PPILML7yrVr';  // Pro Annual
-      }
-      createCheckout(priceId);
-    } catch (error) {
-      console.error('Subscription error:', error);
+      await createCheckoutSession({
+        priceId: getPriceId(selectedTier, selectedPlan),
+        successUrl: `${window.location.origin}/post-payment`,
+        cancelUrl: `${window.location.origin}/payment`,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during checkout');
+      console.error('Subscription error:', err);
     } finally {
       setIsProcessing(false);
     }
   };
+
+  const savings = calculateSavings(5, 50); // Base plan savings
+  const proSavings = calculateSavings(25, 250); // Pro plan savings
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#121212] to-[#1A1A1A] text-gray-200 font-sans">
@@ -80,6 +82,13 @@ const PaymentGate: React.FC = () => {
             </p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+              {error}
+            </div>
+          )}
+
           {/* Plan Selection Toggle */}
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-4">
@@ -98,7 +107,9 @@ const PaymentGate: React.FC = () => {
               </button>
               <span className="text-gray-300">Annual</span>
               {selectedPlan === 'annual' && (
-                <span className="ml-2 text-green-500 text-sm font-medium">Save 17%</span>
+                <span className="ml-2 text-green-500 text-sm font-medium">
+                  Save {selectedTier === 'base' ? savings : proSavings}%
+                </span>
               )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
@@ -126,15 +137,15 @@ const PaymentGate: React.FC = () => {
                   </li>
                 </ul>
                 <button
-                  onClick={handleSubscribe}
-                  disabled={isProcessing || selectedTier !== 'base'}
+                  onClick={() => setSelectedTier('base')}
+                  disabled={isProcessing}
                   className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-all duration-200 ${
                     selectedTier === 'base'
                       ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:opacity-90'
                       : 'bg-[#0F0F0F] text-gray-300 hover:bg-[#1A1A1A]'
                   } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {isProcessing ? 'Processing...' : (selectedTier === 'base' ? 'Subscribe Now' : 'Select Plan')}
+                  {selectedTier === 'base' ? 'Selected' : 'Select Plan'}
                 </button>
               </div>
 
@@ -165,18 +176,38 @@ const PaymentGate: React.FC = () => {
                   </li>
                 </ul>
                 <button
-                  onClick={handleSubscribe}
-                  disabled={isProcessing || selectedTier !== 'pro'}
+                  onClick={() => setSelectedTier('pro')}
+                  disabled={isProcessing}
                   className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-all duration-200 ${
                     selectedTier === 'pro'
                       ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:opacity-90'
                       : 'bg-[#0F0F0F] text-gray-300 hover:bg-[#1A1A1A]'
                   } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {isProcessing ? 'Processing...' : (selectedTier === 'pro' ? 'Subscribe Now' : 'Select Plan')}
+                  {selectedTier === 'pro' ? 'Selected' : 'Select Plan'}
                 </button>
               </div>
             </div>
+
+            {/* Subscribe Button */}
+            <button
+              onClick={handleSubscribe}
+              disabled={isProcessing}
+              className={`mt-8 w-full max-w-md py-3 px-6 rounded-lg text-center font-medium transition-all duration-200 ${
+                isProcessing
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:opacity-90'
+              }`}
+            >
+              {isProcessing ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </div>
+              ) : (
+                'Subscribe Now'
+              )}
+            </button>
           </div>
 
           <div className="text-center text-gray-300 mt-8">
