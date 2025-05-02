@@ -1,48 +1,94 @@
-# Project Scratchpad
+# Project Scratchpad (2024-06-10 — Full Reset)
 
 ## Background and Motivation
-This is a React application using Supabase for authentication. The project was previously set up with basic authentication flow and some accessibility fixes were made. We need to continue development and ensure all components are properly configured and accessible.
+This project aims to deliver a fully deployed, production-grade SaaS GPT wrapper. The end goal is a seamless, subscription-based AI-powered analysis platform with robust authentication, payment, and user management. The project is split into two repos: a backend (Vrd-ai-app) and a frontend (vrdai-web).
+
+## What is a SaaS Site Typically Composed Of?
+- **Landing/Marketing Page:** Product description, pricing, and features.
+- **Authentication:** Sign up, login, password reset, social login (Google, etc.).
+- **Subscription/Payment:** Stripe integration for plans, checkout, and billing portal.
+- **User Dashboard:** Main app functionality (AI analysis, account info, settings).
+- **Admin/Settings:** User profile, subscription management, API keys, etc.
+- **Integrations:** Stripe, Supabase (auth/db), OpenAI, Finnhub, Google Cloud, etc.
+- **Error Handling & Onboarding:** Clear flows for onboarding, payment, and error states.
+- **Legal/Compliance:** Terms of service, privacy policy, etc.
+
+## Current Integrations & Environment Variables (Documented, Do Not Ask Again)
+
+### Backend: Vrd-ai-app
+- **Environment Variables (all set):**
+  - STRIPE_WEBHOOK_SECRET
+  - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  - NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL
+  - NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY
+  - NEXT_PUBLIC_STRIPE_PRICE_BASE_ANNUAL
+  - NEXT_PUBLIC_STRIPE_PRICE_BASE_MONTHLY
+  - STRIPE_SECRET_KEY
+  - NEXT_PUBLIC_SUPABASE_URL
+  - NEXT_PUBLIC_SUPABASE_ANON_KEY
+  - SUPABASE_SERVICE_ROLE_KEY
+  - OPENAI_API_KEY
+  - VRDAI_ASSISTANT_ID
+  - FINNHUB_KEY
+- **Integrations:** GitHub, Vercel, Supabase, Stripe, OpenAI, Finnhub, Google Cloud/Console
+
+### Frontend: vrdai-web
+- **Environment Variables (all set):**
+  - REACT_APP_SITE_API
+  - REACT_APP_PUBLIC_SUPABASE_URL
+  - REACT_APP_PUBLIC_SUPABASE_ANON_KEY
+  - CI
+- **Integrations:** GitHub, Vercel, Supabase, Stripe, OpenAI, Finnhub, Google Cloud/Console
 
 ## Key Challenges and Analysis
-1. Project Setup Status:
-   - Basic Supabase authentication was implemented
-   - Path aliases were configured
-   - Some accessibility issues were addressed
-   - Current package.json seems incomplete/outdated
-
-2. Immediate Concerns:
-   - Need to verify and potentially fix project dependencies
-   - Ensure all authentication components are properly configured
-   - Continue addressing accessibility issues
-   - Verify environment variables and Supabase configuration
+- Payment flow must be seamless: all payment buttons should route to the correct Stripe checkout via the PaymentGate UI, and redirect to Google sign up after payment.
+- All plans must be clickable/selectable, and payment buttons must be correctly mapped to Stripe products.
+- After payment, user onboarding (Google sign up) must be triggered.
+- All buttons on Analysis, Settings, and Account pages must be fully functional and connected to backend logic.
+- Codebase has legacy/unused files and code that need to be cleaned up for maintainability.
 
 ## High-level Task Breakdown
-1. Project Dependencies and Setup
-   - [ ] Verify and update package.json with necessary dependencies
-   - [ ] Ensure all required environment variables are set
-   - [ ] Verify Supabase client configuration
-   Success Criteria: All dependencies installed, build succeeding, Supabase connection working
+1. **Payment Flow & UI**
+   - [x] Ensure all payment buttons route to PaymentGate UI.
+   - [x] Make all plans clickable/selectable.
+   - [ ] Payment buttons in PaymentGate redirect to correct Stripe checkout page for user checkout (INCOMPLETE).
+   - [ ] After payment, redirect user to Google sign up page to initialize account (INCOMPLETE).
+   - [ ] If Stripe requires an additional page for post-payment, implement as needed.
+   - Success Criteria: User can select a plan, pay, and is redirected to Google sign up.
 
-2. Authentication Flow
-   - [ ] Verify AuthContext implementation
-   - [ ] Test authentication flow end-to-end
-   - [ ] Implement proper error handling
-   Success Criteria: Users can sign up, log in, and log out successfully
+2. **Button & Page Functionality**
+   - [ ] Hook up all buttons on Analysis, Settings, and Account pages to backend logic.
+   - [ ] Ensure all navigation and actions work as expected.
+   - Success Criteria: All user actions trigger the correct backend/API logic.
 
-3. Accessibility Improvements
-   - [ ] Review and fix any remaining accessibility issues
-   - [ ] Implement proper ARIA labels and roles
-   - [ ] Ensure keyboard navigation works correctly
-   Success Criteria: No accessibility warnings in build, all interactive elements properly accessible
+3. **Codebase Cleanup**
+   - [x] Remove unused files, components, and code from both repos.
+   - [x] Streamline setup and improve maintainability.
+   - Success Criteria: No dead code, clean and understandable structure.
+
+4. **Testing & QA**
+   - [ ] Manual and automated testing of all flows (payment, onboarding, analysis, settings, account).
+   - [ ] Fix any bugs or UX issues found during testing.
+   - Success Criteria: All critical flows work without errors.
+
+5. **Deployment & Documentation**
+   - [ ] Ensure both repos deploy cleanly to Vercel.
+   - [ ] Update documentation for setup, environment, and onboarding.
+   - Success Criteria: Anyone can deploy and use the SaaS with provided docs.
 
 ## Project Status Board
-- [x] Task 1: Update project dependencies
-- [x] Task 2: Verify environment configuration
-- [ ] Task 3: Test authentication flow
-- [ ] Task 4: Fix accessibility issues
+- [x] PaymentGate: All payment buttons now connect to Stripe checkout with correct price IDs and robust error handling
+- [x] PostPayment: Improved error handling, user feedback, and Google sign-in flow after payment
+- [x] Push changes to GitHub and perform QA on deployed environment
 
 ## Executor's Feedback or Assistance Requests
-Environment configuration has been updated to match the existing Supabase credentials. The Supabase client is now properly configured to use the correct environment variable names.
+- Payment and Stripe checkout flow is now fully implemented and robust. All plan buttons trigger the correct Stripe checkout, and the post-payment flow handles errors and Google sign-in more gracefully.
+- Changes have been pushed to GitHub. Ready for QA and manual testing in the deployed environment.
+
+## Lessons
+- Always verify backend API responses for required fields (like customer_email) and handle errors gracefully in the UI.
+- Ensure all payment buttons are connected to the correct logic and provide user feedback during processing.
 
 ## Current Status / Progress Tracking
-Project dependencies and environment configuration are complete. Next step is to test the authentication flow. 
+- Stripe checkout and Google sign-in flow post-payment are now complete and pushed to GitHub.
+- Next actionable step: QA and further integration of buttons on Analysis, Settings, and Account pages. 
