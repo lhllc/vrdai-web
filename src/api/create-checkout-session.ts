@@ -2,6 +2,12 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-04-30.basil" });
 
 export default async function handler(req: any, res: any) {
+  // Log method and origin for debugging CORS
+  console.log('CORS Debug:', {
+    method: req.method,
+    origin: req.headers.origin,
+    headers: req.headers
+  });
   // --- CORS headers ---
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', 'https://vrdai-web.vercel.app'); // <-- your frontend domain
