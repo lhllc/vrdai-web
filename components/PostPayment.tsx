@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { createClient } from '../utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 
 const PostPayment: React.FC = () => {
   const router = useRouter();
@@ -12,15 +12,14 @@ const PostPayment: React.FC = () => {
   useEffect(() => {
     const handlePostPayment = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get('session_id');
+        const { session_id } = router.query;
 
-        if (!sessionId) {
+        if (!session_id || typeof session_id !== 'string') {
           throw new Error('No session ID found');
         }
 
         // Fetch session details
-        const response = await fetch(`/api/stripe/session?session_id=${sessionId}`);
+        const response = await fetch(`/api/stripe/session?session_id=${session_id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch session details');
         }
@@ -46,16 +45,17 @@ const PostPayment: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ sessionId }),
+          body: JSON.stringify({ session_id }),
         });
 
         if (!verifyResponse.ok) {
           throw new Error('Failed to verify subscription');
         }
 
-        // Update user's subscription status in Supabase
         const { data: subscriptionData } = await verifyResponse.json();
-        await supabase
+
+        // Update user's subscription status in Supabase
+        const { error: upsertError } = await supabase
           .from('subscriptions')
           .upsert({
             id: subscriptionData.id,
@@ -67,6 +67,10 @@ const PostPayment: React.FC = () => {
             created: subscriptionData.created,
           });
 
+        if (upsertError) {
+          throw new Error('Failed to update subscription status');
+        }
+
         // Redirect to dashboard
         router.push('/dashboard');
       } catch (err) {
@@ -77,8 +81,10 @@ const PostPayment: React.FC = () => {
       }
     };
 
-    handlePostPayment();
-  }, [router]);
+    if (router.isReady) {
+      handlePostPayment();
+    }
+  }, [router.isReady, router.query, router]);
 
   if (loading) {
     return (
@@ -122,7 +128,13 @@ const PostPayment: React.FC = () => {
           onClick={() =>
             supabase.auth.signInWithOAuth({
               provider: 'google',
-              options: { redirectTo: '/dashboard' }
+              options: {
+                redirectTo: `${window.location.origin}/dashboard`,
+                queryParams: {
+                  access_type: 'offline',
+                  prompt: 'consent',
+                }
+              }
             })
           }
           className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:opacity-90 transition-opacity"

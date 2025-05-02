@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { createCheckoutSession, PlanType, BillingInterval, calculateSavings, getPriceId } from '../utils/payment';
 import { useRouter } from 'next/router';
+import { createClient } from '@/utils/supabase/client';
+import { loadStripe } from '@stripe/stripe-js';
+import { PRICE_IDS } from '@/utils/payment';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const PaymentGate: React.FC = () => {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<BillingInterval>('annual');
-  const [selectedTier, setSelectedTier] = useState<PlanType>('base');
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
+  const [selectedTier, setSelectedTier] = useState<'base' | 'pro'>('base');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isChartLoaded, setIsChartLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
     // Load TradingView widget script
@@ -42,21 +47,56 @@ const PaymentGate: React.FC = () => {
     }
   }, [isChartLoaded]);
 
+  const getPriceId = () => {
+    if (selectedTier === 'base') {
+      return selectedPlan === 'monthly' ? PRICE_IDS.BASE_MONTHLY : PRICE_IDS.BASE_ANNUAL;
+    } else {
+      return selectedPlan === 'monthly' ? PRICE_IDS.PRO_MONTHLY : PRICE_IDS.PRO_ANNUAL;
+    }
+  };
+
   const handleSubscribe = async () => {
-    setIsProcessing(true);
-    setError(null);
     try {
-      await createCheckoutSession({
-        priceId: getPriceId(selectedTier, selectedPlan),
-        successUrl: `${window.location.origin}/post-payment`,
-        cancelUrl: `${window.location.origin}/payment`,
+      setIsProcessing(true);
+      setError(null);
+
+      // Check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        router.push('/signin');
+        return;
+      }
+
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId: getPriceId(),
+          successUrl: `${window.location.origin}/post-payment`,
+          cancelUrl: `${window.location.origin}/payment`,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during checkout');
       console.error('Subscription error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred during checkout');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const calculateSavings = (monthlyPrice: number, yearlyPrice: number) => {
+    const monthlyTotal = monthlyPrice * 12;
+    return Math.round(((monthlyTotal - yearlyPrice) / monthlyTotal) * 100);
   };
 
   const savings = calculateSavings(5, 50); // Base plan savings
