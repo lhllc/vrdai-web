@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe/config';
 import { createClient } from '@/utils/supabase/server';
+import { getURL } from '@/utils/helpers';
 
 export async function POST(req: Request) {
   try {
-    const { priceId, successUrl, cancelUrl } = await req.json();
+    const { priceId } = await req.json();
 
     if (!priceId) {
       return NextResponse.json(
@@ -52,37 +53,49 @@ export async function POST(req: Request) {
       customerId = customer.id;
 
       // Store customer ID in Supabase
-      await supabase
+      const { error: insertError } = await supabase
         .from('customers')
         .insert([{ id: user.id, stripe_customer_id: customerId }]);
+
+      if (insertError) {
+        console.error('Failed to store customer ID:', insertError);
+        return NextResponse.json(
+          { error: 'Failed to store customer data' },
+          { status: 500 }
+        );
+      }
     }
 
-    // Create checkout session
+    const baseUrl = getURL();
+    
+    // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [
         {
           price: priceId,
-          quantity: 1,
-        },
+          quantity: 1
+        }
       ],
-      success_url: successUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/post-payment?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
+      mode: 'subscription',
+      success_url: `${baseUrl}/account?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/pricing`,
+      subscription_data: {
+        metadata: {
+          userId: user.id
+        }
+      },
+      payment_method_types: ['card'],
       allow_promotion_codes: true,
-      billing_address_collection: 'required',
-      customer_update: {
-        address: 'auto'
-      }
+      billing_address_collection: 'required'
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ sessionId: session.id });
   } catch (error: any) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(
       { error: error.message },
-      { status: 500 }
+      { status: error.statusCode || 500 }
     );
   }
 } 
