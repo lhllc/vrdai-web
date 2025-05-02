@@ -4,7 +4,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-04
 export default async function handler(req: any, res: any) {
   // --- CORS headers ---
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', 'https://vrdai-p7b3d3kcu-leinfelder-holt.vercel.app'); // <-- your frontend domain
+  res.setHeader('Access-Control-Allow-Origin', 'https://vrdai-web.vercel.app'); // <-- your frontend domain
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
