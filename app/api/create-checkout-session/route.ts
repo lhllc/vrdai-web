@@ -17,8 +17,9 @@ function setCORSHeaders(res: NextResponse) {
     'https://vrdai-web.vercel.app',
     'http://localhost:3000'
   ];
-  const origin = allowedOrigins.includes(process.env.NEXT_PUBLIC_SITE_URL || '')
-    ? process.env.NEXT_PUBLIC_SITE_URL
+  const envOrigin = process.env.NEXT_PUBLIC_SITE_URL;
+  const origin = allowedOrigins.includes(envOrigin || '')
+    ? envOrigin || allowedOrigins[0]
     : allowedOrigins[0];
 
   res.headers.set('Access-Control-Allow-Credentials', 'true');
