@@ -53,31 +53,38 @@ export default function Pricing({ user, products, subscription }: Props) {
       return router.push('/signin/signup');
     }
 
-    const { errorRedirect, sessionId } = await checkoutWithStripe(
-      price,
-      currentPath
-    );
-
-    if (errorRedirect) {
-      setPriceIdLoading(undefined);
-      return router.push(errorRedirect);
-    }
-
-    if (!sessionId) {
+    // New API-based checkout session creation
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: price.id })
+      });
+      const data = await response.json();
+      if (data.url) {
+        setPriceIdLoading(undefined);
+        window.location.href = data.url;
+        return;
+      } else if (data.error) {
+        setPriceIdLoading(undefined);
+        return router.push(
+          getErrorRedirect(
+            currentPath || '/',
+            'Stripe error',
+            data.error
+          )
+        );
+      }
+    } catch (error: any) {
       setPriceIdLoading(undefined);
       return router.push(
         getErrorRedirect(
-          currentPath,
+          currentPath || '/',
           'An unknown error occurred.',
           'Please try again later or contact a system administrator.'
         )
       );
     }
-
-    const stripe = await getStripe();
-    stripe?.redirectToCheckout({ sessionId });
-
-    setPriceIdLoading(undefined);
   };
 
   if (!products.length) {
