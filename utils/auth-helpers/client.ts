@@ -2,14 +2,13 @@
 
 import { type Provider } from '@supabase/supabase-js';
 import { getURL } from '@/utils/helpers';
-import { redirectToPath } from './server';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 export async function handleRequest(
   e: React.FormEvent<HTMLFormElement>,
   requestFunc: (formData: FormData) => Promise<string>,
   router: AppRouterInstance | null = null
-): Promise<boolean | void> {
+): Promise<boolean | void | string> {
   // Prevent default form submission refresh
   e.preventDefault();
 
@@ -21,7 +20,8 @@ export async function handleRequest(
     return router.push(redirectUrl);
   } else {
     // Otherwise, redirect server-side
-    return await redirectToPath(redirectUrl);
+    // return await redirectToPath(redirectUrl);
+    return redirectUrl;
   }
 }
 
