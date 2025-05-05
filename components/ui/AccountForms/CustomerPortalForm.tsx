@@ -36,13 +36,6 @@ export default function CustomerPortalForm({ subscription }: Props) {
       minimumFractionDigits: 0
     }).format((subscription?.prices?.unit_amount || 0) / 100);
 
-  const handleStripePortalRequest = async () => {
-    setIsSubmitting(true);
-    const redirectUrl = await createStripePortal(currentPath);
-    setIsSubmitting(false);
-    return router.push(redirectUrl);
-  };
-
   return (
     <Card
       title="Your Plan"
@@ -54,13 +47,6 @@ export default function CustomerPortalForm({ subscription }: Props) {
       footer={
         <div className="flex flex-col items-start justify-between sm:flex-row sm:items-center">
           <p className="pb-4 sm:pb-0">Manage your subscription on Stripe.</p>
-          <Button
-            variant="slim"
-            onClick={handleStripePortalRequest}
-            loading={isSubmitting}
-          >
-            Open customer portal
-          </Button>
         </div>
       }
     >
