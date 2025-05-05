@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+// import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
@@ -10,19 +10,9 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code');
 
   if (code) {
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (error) {
-      return NextResponse.redirect(
-        getErrorRedirect(
-          `${requestUrl.origin}/signin`,
-          error.name,
-          "Sorry, we weren't able to log you in. Please try again."
-        )
-      );
-    }
+    // const supabase = createClient();
+    // const { error } = await supabase.auth.exchangeCodeForSession(code);
+    // TODO: Re-implement callback logic without supabase dependency
   }
 
   // URL to redirect to after sign in process completes

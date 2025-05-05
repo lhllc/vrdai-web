@@ -1,5 +1,4 @@
 import Logo from '@/components/icons/Logo';
-import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
@@ -42,17 +41,17 @@ export default async function SignIn({
   }
 
   // Check if the user is already logged in and redirect to the account page if so
-  const supabase = createClient();
+  // const supabase = createClient();
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  // const {
+  //   data: { user }
+  // } = await supabase.auth.getUser();
 
-  if (user && viewProp !== 'update_password') {
-    return redirect('/');
-  } else if (!user && viewProp === 'update_password') {
-    return redirect('/signin');
-  }
+  // if (user && viewProp !== 'update_password') {
+  //   return redirect('/');
+  // } else if (!user && viewProp === 'update_password') {
+  //   return redirect('/signin');
+  // }
 
   return (
     <div className="flex justify-center height-screen-helper">
