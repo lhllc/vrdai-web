@@ -1,7 +1,6 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import { updatePassword } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -18,7 +17,7 @@ export default function UpdatePassword({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, updatePassword, router);
+    await handleRequest(e, async () => '/', router);
     setIsSubmitting(false);
   };
 

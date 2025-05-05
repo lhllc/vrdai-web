@@ -2,7 +2,6 @@
 
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
-import { requestPasswordUpdate } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -24,7 +23,7 @@ export default function ForgotPassword({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, requestPasswordUpdate, router);
+    await handleRequest(e, async () => '/', router);
     setIsSubmitting(false);
   };
 
